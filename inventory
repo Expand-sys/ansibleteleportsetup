@@ -1,0 +1,8 @@
+hostnode:
+    hosts:
+        10.10.0.209:
+            vars: ansible_ssh_user=root ansible_ssh_common_args='-o StrictHostKeyChecking=no' 
+clients:
+    hosts:
+        10.10.0.209:
+            vars: ansible_ssh_user=root ansible_ssh_common_args='-o StrictHostKeyChecking=no' 

@@ -1,0 +1,53 @@
+---
+- name: install caddy from binary
+  ansible.builtin.get_url:
+    url: https://caddyserver.com/api/download?os=linux&arch=amd64&p=github.com%2Fcaddy-dns%2Fcloudflare&idempotency=54951177807414
+    dest: /usr/bin/caddy
+    mode: '0751'
+
+- name: create caddyfile
+  ansible.builtin.blockinfile:
+    block: |
+      {{ SUBDOMAIN }} {
+        reverse_proxy https://{{ ansible_default_ipv4.address }}:3022 {
+                transport http {
+                        tls_insecure_skip_verify
+                }
+        }
+      }
+    path: /etc/caddy/Caddyfile
+    create: true
+
+- name: creat Caddy systemd file
+  ansible.builtin.copy:
+    content: |
+      [Unit]
+      Description=Caddy
+      Documentation=https://caddyserver.com/docs/
+      After=network.target network-online.target
+      Requires=network-online.target
+
+      [Service]
+      Type=notify
+      User=root
+      Group=root
+      ExecStart=/usr/bin/caddy run --environ --config /etc/caddy/Caddyfile
+      ExecReload=/usr/bin/caddy reload --config /etc/caddy/Caddyfile --force
+      TimeoutStopSec=5s
+      LimitNOFILE=1048576
+      LimitNPROC=512
+      PrivateTmp=true
+      ProtectSystem=full
+      AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/caddy/Caddyfile
+
+- name: Start Caddy on startup
+  ansible.builtin.systemd_service:
+    name: 'caddy'
+    state: 'started'
+    enabled: yes
+    daemon_reload: true
+    

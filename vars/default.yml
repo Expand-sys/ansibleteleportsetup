@@ -1,0 +1,11 @@
+---
+#If you dont enable reverse proxy you will need to set up your certificates after install and restart teleport
+#key file location: /var/lib/teleport/webproxy_key.pem
+#cert file location: /var/lib/teleport/webproxy_cert.pem
+#run this when done("systemctl restart teleport")
+
+#if you do enable reverse proxy make sure your selected domain name is routed to that ip address and port forwarding is set to the teleport host for ports 80 and 443
+REVERSE_PROXY: true
+#subdomain is the subdomain you want tied to teleport for the reverse proxy this should also be your hostname for your teleport hostnode(use {your teleport hostname}.localhost to use an internal certificate)
+SUBDOMAIN: t.localhost
+
