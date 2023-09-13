@@ -14,14 +14,11 @@
       register: teleport_bin
     
     - debug:
-        msg: "{{ teleport_bin }}"
+        msg: "{{ teleport_bin.stat }}"
 
     - name: install teleport
       ansible.builtin.shell:
         cmd: 'curl https://goteleport.com/static/install.sh | bash -s 13.3.8'
-
-
-    - name:
 
     - name: Ensure teleport has selected state and enabled on boot.
       service:
@@ -29,9 +26,14 @@
         state: 'started'
         enabled: yes
 
+    - name: sleep for 15 secs to wait for teleport to start
+      ansible.builtin.wait_for:
+        timeout: 15
+      delegate_to: localhost
+
     - name: Get teleport token
       ansible.builtin.shell:
-        cmd: '/usr/local/bin/tctl tokens add --type=node --format=text'
+        cmd: 'tctl tokens add --type=node --format=text'
         executable: /bin/bash
       register: token
 
@@ -89,5 +91,6 @@
       with_first_found:
         - "vars/default.yml"
   tasks:
-    - include_tasks: reverseproxy.ansible.yml
-      when: {{ REVERSE_PROXY }}
+    - name: set up reverse proxy
+      include_tasks: reverseproxy.ansible.yml
+      when: REVERSE_PROXY

@@ -9,7 +9,7 @@
   ansible.builtin.blockinfile:
     block: |
       {{ SUBDOMAIN }} {
-        reverse_proxy https://{{ ansible_default_ipv4.address }}:3022 {
+        reverse_proxy https://{{ ansible_default_ipv4.address }}:3080 {
                 transport http {
                         tls_insecure_skip_verify
                 }
@@ -42,7 +42,7 @@
 
       [Install]
       WantedBy=multi-user.target
-    dest: /etc/caddy/Caddyfile
+    dest: /etc/systemd/system/caddy.service
 
 - name: Start Caddy on startup
   ansible.builtin.systemd_service:

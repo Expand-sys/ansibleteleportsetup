@@ -1,8 +1,8 @@
 hostnode:
     hosts:
-        10.10.0.209:
-            vars: ansible_ssh_user=root ansible_ssh_common_args='-o StrictHostKeyChecking=no' 
+        t2.dubois.localhost:
+            vars: ansible_ssh_user=root ansible_ssh_common_args='-o StrictHostKeyChecking=no' ANSIBLE_HOST_KEY_CHECKING=False
 clients:
     hosts:
-        10.10.0.209:
-            vars: ansible_ssh_user=root ansible_ssh_common_args='-o StrictHostKeyChecking=no' 
+        t2.dubois.localhost:
+            vars: ansible_ssh_user=root ansible_ssh_common_args='-o StrictHostKeyChecking=no' ANSIBLE_HOST_KEY_CHECKING=False

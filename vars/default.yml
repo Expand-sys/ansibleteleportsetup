@@ -7,5 +7,5 @@
 #if you do enable reverse proxy make sure your selected domain name is routed to that ip address and port forwarding is set to the teleport host for ports 80 and 443
 REVERSE_PROXY: true
 #subdomain is the subdomain you want tied to teleport for the reverse proxy this should also be your hostname for your teleport hostnode(use {your teleport hostname}.localhost to use an internal certificate)
-SUBDOMAIN: t.localhost
+SUBDOMAIN: t2.dubois.localhost
 
