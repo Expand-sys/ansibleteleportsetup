@@ -10,15 +10,15 @@
         - "vars/default.yml"
   tasks:
     - name: Check if teleport is installed.
-      ansible.builtin.stat: "path=/usr/local/bin/teleport"
+      ansible.builtin.shell: "teleport version"
       register: teleport_bin
-    
-    - debug:
-        msg: "{{ teleport_bin.stat }}"
+      ignore_errors: true
 
     - name: install teleport
       ansible.builtin.shell:
-        cmd: 'curl https://goteleport.com/static/install.sh | bash -s 13.3.8'
+        cmd: 'curl https://goteleport.com/static/install.sh | bash -s {{ TELEPORT_VER }}'
+      when: not TELEPORT_VER in teleport_bin.stdout
+
 
     - name: Ensure teleport has selected state and enabled on boot.
       service:
@@ -26,10 +26,9 @@
         state: 'started'
         enabled: yes
 
-    - name: sleep for 15 secs to wait for teleport to start
+    - name: sleep for 10 secs to wait for teleport to start
       ansible.builtin.wait_for:
-        timeout: 15
-      delegate_to: localhost
+        timeout: 10
 
     - name: Get teleport token
       ansible.builtin.shell:
@@ -37,12 +36,19 @@
         executable: /bin/bash
       register: token
 
+    - name: "Add K8S Token and Hash to dummy host"
+      add_host:
+        name:   "TELE_TOKEN_HOLDER"
+        token_c:  "{{ token.stdout }}"
+
+
     - debug:
-        msg: token.stdout
+        msg: '{{ token.stdout }}'
 
 - hosts: "clients"
   name: Client setup
-  vars:
+  vars: 
+    token_clients: "{{ hostvars['TELE_TOKEN_HOLDER']['token_c'] }}"
   become: true
   pre_tasks:
     - name: Load variables
@@ -52,22 +58,27 @@
   
   tasks:
     - name: Check if teleport is installed.
-      ansible.builtin.stat: "path=/usr/local/bin/teleport"
+      ansible.builtin.shell: "teleport version"
       register: teleport_bin_clients
 
     - name: install teleport
       ansible.builtin.shell:
         cmd: 'curl https://goteleport.com/static/install.sh | bash -s 13.3.8'
-      when: teleport_bin_clients.stat.exists == false
+      when: not TELEPORT_VER in teleport_bin_clients.stdout
+    
+    - name: Ensure teleport is stopped.
+      service:
+        name: 'teleport'
+        state: 'stopped'
 
     - name: remove existing config if exists
       ansible.builtin.file:
         path: /etc/teleport.yaml
         state: absent
-
+    
     - name: Create teleport config
       ansible.builtin.shell:
-        cmd: '/usr/local/bin/teleport node configure --output=file:///etc/teleport.yaml --token={{ token.stdout }} --proxy={{ groups["hostnode"] | map("extract", hostvars, ["inventory_hostname"]) }}:443'
+        cmd: '/usr/local/bin/teleport node configure --output=file:///etc/teleport.yaml --token={{ token_clients }} --auth-server={{ SUBDOMAIN }}:3025'
         executable: /bin/bash
 
     - name: Ensure teleport has selected state and enabled on boot.
@@ -76,12 +87,26 @@
         state: 'started'
         enabled: yes
 
-    - name: open ports for teleport
+    - name: open ports for teleport - ubuntu OS
       ansible.builtin.shell:
-        cmd: 'ufw allow 3022/tcp && ufw allow 443/tcp'
+        cmd: 'ufw allow 3022/tcp'
+      when: ansible_facts['distribution'] == "Ubuntu"
+    
+    - name: Install python3 firewall for rhel
+      ansible.builtin.dnf:
+        name: python3-firewall
+        state: present
+      when: ansible_facts['os_family'] == "RedHat"
 
+    - name: open ports for teleport RHEL
+      ansible.builtin.firewalld:
+        permanent: true
+        port: 3022/tcp
+        state: enabled
+        immediate: true
+      when: ansible_facts['os_family'] == "RedHat"
 
-- hosts: "hostnode"
+- hosts: "reverseproxy"
   name: reverse proxy setup
   vars:
   become: true
