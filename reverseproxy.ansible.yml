@@ -4,7 +4,11 @@
     url: https://caddyserver.com/api/download?os=linux&arch=amd64&p=github.com%2Fcaddy-dns%2Fcloudflare&idempotency=54951177807414
     dest: /usr/bin/caddy
     mode: '0751'
-
+- name: grab ip address from gather_facts
+  ansible.builtin.setup:
+    gather_subset:
+      - ansible_default_ipv4.address
+      - ansible_fips
 - name: create caddyfile
   ansible.builtin.blockinfile:
     block: |
