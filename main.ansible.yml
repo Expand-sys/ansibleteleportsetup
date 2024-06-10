@@ -24,7 +24,49 @@
         cmd: 'curl https://goteleport.com/static/install.sh | bash -s {{ TELEPORT_VER }}'
       when: not TELEPORT_VER in teleport_bin.stdout
 
-
+    - name: create teleport.yaml config
+      ansible.builtin.blockinfile:
+        content: |
+          version: v3
+          teleport:
+            nodename: {{ SUBDOMAIN }}
+            data_dir: /var/lib/teleport
+            log:
+              output: stderr
+              severity: INFO
+              format:
+                output: text
+            ca_pin: ""
+            diag_addr: ""
+          auth_service:
+            proxy_listener_mode: multiplex
+          ssh_service:
+            enabled: "yes"
+            commands:
+            - name: hostname
+              command: [hostname]
+              period: 1m0s
+          proxy_service:
+              enabled: yes
+              proxy_protocol: off
+              listen_addr: 0.0.0.0:3023
+              tunnel_listen_addr: 0.0.0.0:3024
+              web_listen_addr: 0.0.0.0:3080
+              public_addr: {{ SUBDOMAIN }}:3080
+              ssh_public_addr: {{ SUBDOMAIN }}:3023
+              tunnel_public_addr: {{ SUBDOMAIN }}:3024
+              https_keypairs: 
+                - key_file: /var/lib/teleport/webproxy_key.pem
+                  cert_file: /var/lib/teleport/webproxy_cert.pem
+              https_keypairs_reload_interval: 0
+              ui:
+                scrollback_lines: 1000
+              trust_x_forwarded_for: true
+        path: /etc/teleport.yaml 
+        create: true
+    - name: Generate self signed ssl cert 
+      ansible.builtin.shell: openssl req -x509 -newkey rsa:4096 -keyout /var/lib/teleport/webproxy_key.pem -out /var/lib/teleport/webproxy_cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN={{ SUBDOMAIN }}"
+    
     - name: Ensure teleport has selected state and enabled on boot.
       ansible.builtin.service:
         name: 'teleport'
@@ -37,7 +79,7 @@
 
     - name: Get teleport token
       ansible.builtin.shell:
-        cmd: 'tctl tokens add --type=node --format=text'
+        cmd: 'tctl tokens add --type=node --format=text --insecure' 
         executable: /bin/bash
       register: token
 
@@ -65,6 +107,7 @@
     - name: Check if teleport is installed.
       ansible.builtin.shell: "teleport version"
       register: teleport_bin_clients
+      ignore_errors: true
 
     - name: install teleport
       ansible.builtin.shell:
@@ -75,6 +118,7 @@
       service:
         name: 'teleport'
         state: 'stopped'
+      when: teleport_bin_clients
 
     - name: remove existing config if exists
       ansible.builtin.file:
