@@ -9,7 +9,7 @@ REVERSE_PROXY: false
 #subdomain is the subdomain you want tied to teleport for the reverse proxy this should also be your hostname for your teleport hostnode(use {your teleport hostname}.localhost to use an internal certificate)
 SUBDOMAIN: t.duboiss.com
 # set teleport version here
-TELEPORT_VER: 15.4.0
+TELEPORT_VER: 16.1.0
 
 SSL_ENABLED: yes
 SSL_EMAIL: harrison@duboiss.com
