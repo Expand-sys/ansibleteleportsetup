@@ -78,7 +78,7 @@
         state: directory
 
     - name: Generate self signed ssl cert 
-      ansible.builtin.shell: openssl req -x509 -newkey rsa:4096 -keyout /var/lib/teleport/webproxy_key.pem -out /var/lib/teleport/webproxy_cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN={{ SUBDOMAIN }}"
+      ansible.builtin.shell: openssl req -x509 -newkey rsa:4096 -keyout /var/lib/teleport/webproxy_key.pem -out /var/lib/teleport/webproxy_cert.pem -sha256 -days 3650 -nodes -subj '/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN={{ SUBDOMAIN }}' -addext 'subjectAltName=DNS:{{ SUBDOMAIN }}'
     
     - name: Ensure teleport has selected state and enabled on boot.
       ansible.builtin.service:
