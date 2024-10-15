@@ -7,9 +7,9 @@
 #if you do enable reverse proxy make sure your selected domain name is routed to that ip address and port forwarding is set to the teleport host for ports 80 and 443
 REVERSE_PROXY: false
 #subdomain is the subdomain you want tied to teleport for the reverse proxy this should also be your hostname for your teleport hostnode(use {your teleport hostname}.localhost to use an internal certificate)
-SUBDOMAIN: t.duboiss.com
+SUBDOMAIN: t.expand.sh
 # set teleport version here
-TELEPORT_VER: 16.1.0
+TELEPORT_VER: 16.4.2
 
 SSL_ENABLED: yes
-SSL_EMAIL: harrison@duboiss.com
+SSL_EMAIL: expand@expand.sh
